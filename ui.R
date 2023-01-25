@@ -13,7 +13,9 @@ ui <- fluidPage(
         includeHTML("footer.html")
     ),
     br(),            
-    HTML(paste0('<center style="font-size:12px"> Version ',{Sys.getenv("APP_VERSION")},' </center>')),
+    div(
+      HTML(paste0('<center style="font-size:12px"> Version ',{Sys.getenv("APP_VERSION")},' </center>'))
+    ),
     br()
 )
 
