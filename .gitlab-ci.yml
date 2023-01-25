@@ -1,0 +1,5 @@
+# a conserver pour qui l'intégration SK8 fonctionne
+include: '.gitlab-ci-sk8.yml'
+
+# Vous pouvez ajouter ici vos jobs et/ou réécrire des jobs existants
+
