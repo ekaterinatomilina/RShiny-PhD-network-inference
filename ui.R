@@ -12,7 +12,7 @@ ui <- fluidPage(
         class="footer",
         includeHTML("footer.html"),
         br(),
-        HTML(paste0('<center style="font-size:12px"> Version ',{Sys.getenv("APP_VERSION")},' </center>'))
+        HTML(paste0('<div style="bottom:0;font-size:12px;position: absolute;right: 0;"> Version ',{Sys.getenv("APP_VERSION")},' </div>'))
     )
 )
 
