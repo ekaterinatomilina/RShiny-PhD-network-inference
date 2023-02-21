@@ -1,0 +1,7 @@
+*.Rproj$
+.git*
+.gitlab-ci.yml
+.gitlab-ci-sk8.yml
+Dockerfile
+README.md
+## Ajouter les fichiers et/ou repertoires a ne pas copier dans l application
