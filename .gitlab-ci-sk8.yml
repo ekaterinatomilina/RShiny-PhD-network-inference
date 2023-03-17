@@ -1,6 +1,6 @@
 include:
   - project: "sk8/sk8-conf/sk8-template-ci"
-    ref: test-cache
+    ref: main
     file:
       - "/templates/.sk8-templates.yml"
 
