@@ -8,7 +8,7 @@ variables:
   # pour activer automatiquement la publication à chaque mise à jour (true/false) 
   MISE_A_JOUR_AUTOMATIQUE: "false"
   # Version R fixée (uniquement pour la configuration)
-  R_VERSION: "4.3.1"
+  R_VERSION: "4.3.3"
   # Pour forcer la regénération de l'image de mon application (true/false)
   DOCKER_FORCE_REGEN: "false"
   # En cas d'erreur dans le CI/CD, active le mode verbose (true/false)
