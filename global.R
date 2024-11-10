@@ -1,4 +1,4 @@
-install.packages("heterocop_0.1.0.0.tar.gz")
+install.packages("heterocop")
 install.packages("shiny")
 install.packages("corrplot")
 install.packages("bslib")
