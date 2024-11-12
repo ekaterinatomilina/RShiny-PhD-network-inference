@@ -1,12 +1,3 @@
-install.packages("heterocop")
-install.packages("shiny")
-install.packages("corrplot")
-install.packages("bslib")
-install.packages("coulourpicker")
-install.packages("shinyjs")
-install.packages("ggplot2")
-install.packages("mirai")
-
 library(heterocop)
 library(shiny)
 library(igraph)
