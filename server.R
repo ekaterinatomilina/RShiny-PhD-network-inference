@@ -9,10 +9,14 @@ server <- function(input, output,session) {
   })
   
   trunc_data <- reactive({
+    if(sum(is.na(dataframe()))==0){
     if(!input$subset){
       dataframe()
     }else{
       dataframe()[input$rowmin:input$rowmax,input$colmin:input$colmax]
+    }
+    }else{
+      print("Your data contains NAs")
     }
   })
   
@@ -27,6 +31,7 @@ server <- function(input, output,session) {
   )
   
   type_vec <- reactive({
+    validate(need(sum(is.na(dataframe()))==0,""))
     if(!input$specify){
       type <- c()
       for(i in 1:dim(dataframe())[2]){
