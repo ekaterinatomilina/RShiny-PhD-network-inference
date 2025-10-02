@@ -1,5 +1,7 @@
 server <- function(input, output,session) {
-  # Estimation tab
+  
+  # All that's related to the data, common for cor and cov
+  
   dataframe <- reactive({
     file <- input$dataset
     ext <- tools::file_ext(file$datapath)
@@ -22,7 +24,7 @@ server <- function(input, output,session) {
   
   output$contents <- renderTable({
     trunc_data()
-  })
+  },align="c")
   
   output$download_data <- downloadHandler(filename = "new_dataset.csv",
                                           content = function(file){
@@ -48,24 +50,33 @@ server <- function(input, output,session) {
   })
   
   
+  # CORRELATION 
+  
+  # Estimation
+  
   PROGRESS_FILE <- "progress.txt"
   
   task <- ExtendedTask$new(function(data,type){
     mirai({
       sink(PROGRESS_FILE,type="output")
       on.exit(sink())
-      rho_estim(data,type,parallel=TRUE)
+      rho_estim(data,type,ncores=2)
     }, rho_estim=rho_estim,data=data,type=type,PROGRESS_FILE = PROGRESS_FILE)
   })
+  
   observeEvent(input$dataset, task$invoke(dataframe(),type_vec()))
   
   progress <- reactiveFileReader(100, session, PROGRESS_FILE, function(path) {
-    if (file.exists(path)){
-      print(path)
-      print(readLines(path, -1, warn = FALSE))}
-    else{print("")}
+    if (file.exists(path)) {
+      lignes <- readLines(path, warn = FALSE)
+      return(lignes)
+    }
+    return(character(0))
   })
-  output$progress <- renderText({ progress() })
+  
+  output$progress <- renderText({
+    paste(progress(), collapse = "\n")
+  })
   
   observeEvent(task$result(), unlink(PROGRESS_FILE))
   
@@ -80,7 +91,7 @@ server <- function(input, output,session) {
   
   output$Mhat <- renderTable({
     matrix_estim()
-  })
+  },align="c")
   
   output$download_matrix <- downloadHandler(filename = "correlation_matrix.csv",
                                             content = function(file){
@@ -88,6 +99,7 @@ server <- function(input, output,session) {
                                             }
   )
   
+  # Corrplot
   
   cor_plot <- function(){
     corrplot(matrix_estim(),type="upper",method=input$corrplot_type)
@@ -97,6 +109,8 @@ server <- function(input, output,session) {
     cor_plot()
   })
   
+  
+  
   output$download_corrplot <- downloadHandler(filename = "corrplot.png",
                                               content = function(file){
                                                 png(file)
@@ -104,6 +118,8 @@ server <- function(input, output,session) {
                                                 dev.off()
                                               }
   )
+  
+  # Représentation graphique
   
   observeEvent(input$other_group,
                {
@@ -202,6 +218,177 @@ server <- function(input, output,session) {
                                           content = function(file){
                                             png(file)
                                             plot_hat()
+                                            dev.off()
+                                          }
+  )
+  # PRECISION
+  
+  #Selection du lambda
+  lambdaopt <- reactive({
+    
+    if (!isTRUE(input$lambdagrid)) {
+      return(NULL)  # pas de calcul si on ne spécifie pas une grille
+    }
+    
+    n <- nrow(dataframe())
+    d <- ncol(dataframe())
+    
+    lambda_list <- seq(input$lambdamin,input$lambdamax,input$lambdastep)
+    crit <- c()
+    for(l in lambda_list){
+      OM_hat <-  huge::huge(matrix_estim(),lambda=l,method="glasso")$icov[[1]]
+      c <- matrix.trace(matrix_estim() %*%OM_hat)-log(det(OM_hat))+log(log(n))*(log(d)/n)*sum(OM_hat!=0)
+      crit <- c(crit, c)
+    }
+    
+    crit_min <- min(crit,na.rm=T)
+    lambdaopt <- lambda_list[which(crit==crit_min)]
+    
+    return(list(lambda_list,crit,lambdaopt))
+
+  })
+  
+  plot_crit <- function(){ 
+    req(lambdaopt())  # pas de plot si pas calculé
+    par(xpd=TRUE)
+    plot(lambdaopt()[[1]],lambdaopt()[[2]],xlab="HBIC",ylab="lambda",type="l")
+    abline(v=lambdaopt()[[3]],col="red",lty=3)
+  }
+  
+  
+  output$crit_lamb <-renderPlot({
+    req(input$lambdagrid)
+    plot_crit()
+  })
+  
+  output$download_crit <- downloadHandler(filename = "HBIC.png",
+                                           content = function(file){
+                                             req(input$lambdagrid)
+                                             png(file)
+                                             plot_crit()
+                                             dev.off()
+                                           }
+  )
+  
+  #Estimation
+  matrix_prec <- reactive({
+    lambda_val <- if (isTRUE(input$lambdagrid)) {
+      lambdaopt()[[3]]
+    } else {
+      input$lambda
+    }
+   OM_hat <-  huge::huge(matrix_estim(),lambda=lambda_val,method="glasso")$icov[[1]]
+   
+  return(OM_hat)
+   })
+
+  output$OMhat <- renderTable({
+    matrix_prec()
+     },align="c")
+  
+  output$download_matrix2 <- downloadHandler(filename = "precision_matrix.csv",
+                                            content = function(file){
+                                              write.csv2(matrix_prec(),file)
+                                            }
+  )
+  
+  # Graphical rep
+  
+  observeEvent(input$other_group2,
+               {
+                 if(input$other_group2){
+                   shinyjs::hide(id="colcont2")
+                   shinyjs::hide(id="coldisc2")
+                 }else{
+                   shinyjs::show(id="colcont2")
+                   shinyjs::show(id="coldisc2")
+                 }
+               })
+  
+  new_groups2 <- reactive({
+    input$nbgps2
+  })
+  
+  
+  output$groups21 <- renderUI({
+    output = tagList()
+    for(i in 1:new_groups2()){
+      output[[i]] = tagList()
+      output[[i]][[1]]=colourpicker::colourInput(inputId = paste0("colorgppr2", i), label = paste0("Select the color for group ",i))
+    }
+    output
+  })
+  
+  output$groups23 <- renderUI({
+    output = tagList()
+    for(i in 1:new_groups2()){
+      output[[i]] = tagList()
+      output[[i]][[1]]=textInput(inputId = paste0("numgppr2", i), label = paste0("Select the columns for group ",i))
+    }
+    output
+  })
+  
+  output$groups22 <- renderUI({
+    output = tagList()
+    for(i in 1:new_groups2()){
+      output[[i]] = tagList()
+      output[[i]][[1]]=textInput(inputId = paste0("labelgppr2", i), label = paste0("Enter the label for group ",i))
+    }
+    output
+  })
+  
+  color2 <- reactive({
+    col <- rep(NA,length(type_vec()))
+    col_order <- c()
+    if(!input$custom2){
+      col[which(type_vec()=="C")] <- "goldenrod1"
+      col[which(type_vec()=="D")] <- "lightskyblue"
+      col_order <- c("goldenrod1","lightskyblue")
+    }else if(!input$other_group2){
+      col[which(type_vec()=="C")] <- input$colcont2
+      col[which(type_vec()=="D")] <- input$coldisc2
+      col_order <- c(input$colcont2,input$coldisc2)
+    }else{
+      col_order <- c()
+      for(i in 1:new_groups2()){
+        id <- paste0("numgppr2",i)
+        color_new <- paste0("colorgppr2",i)
+        col[as.numeric(unlist(strsplit(input[[id]],",")))] <- input[[color_new]]
+        col_order <-c(col_order,input[[color_new]])
+      }
+    }
+    return(list(col,col_order))
+  })
+  
+  legendgphpr <- reactive({
+    if(!input$custom2){
+      legend <- c("Continuous","Discrete")
+    }else if(!input$other_group2){
+      legend <- c("Continuous","Discrete")
+    }else{
+      legend <- c()
+      for(i in 1:new_groups()){
+        labelgp <- paste0("labelgppr2",i)
+        legend <- c(legend,input[[labelgp]])
+      }
+    }
+    return(legend)
+  })
+  
+  network_ref_estimpr <- reactive(graph_from_adjacency_matrix(matrix_cor_ts(matrix_prec(),0.01), mode="undirected", diag=F))
+  
+  plot_hat2 <- function(){
+    par(xpd=TRUE)
+    plot(network_ref_estimpr(),vertex.color=color2()[[1]])
+    legend("bottomright",inset=c(-0,-0.15), legendgphpr(),fill=color2()[[2]])
+  }
+  
+  output$plot2 <- renderPlot(plot_hat2())
+  
+  output$download_plot2 <- downloadHandler(filename = "graph.png",
+                                          content = function(file){
+                                            png(file)
+                                            plot_hat2()
                                             dev.off()
                                           }
   )
