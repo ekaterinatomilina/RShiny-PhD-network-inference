@@ -150,7 +150,7 @@ server <- function(input, output,session) {
     output = tagList()
     for(i in 1:new_groups()){
       output[[i]] = tagList()
-      output[[i]][[1]]=textInput(inputId = paste0("numgp", i), label = paste0("Select the columns for group ",i))
+      output[[i]][[1]]=textInput(inputId = paste0("numgp", i), label = paste0("Select the columns for group ",i), value=as.character(i))
     }
     output
   })
@@ -176,10 +176,12 @@ server <- function(input, output,session) {
       col[which(type_vec()=="D")] <- input$coldisc
       col_order <- c(input$colcont,input$coldisc)
     }else{
+      req(input$custom, input$other_group)
       col_order <- c()
       for(i in 1:new_groups()){
         id <- paste0("numgp",i)
         color_new <- paste0("colorgp",i)
+        req(input[[id]]) 
         col[as.numeric(unlist(strsplit(input[[id]],",")))] <- input[[color_new]]
         col_order <-c(col_order,input[[color_new]])
       }
@@ -199,7 +201,6 @@ server <- function(input, output,session) {
         labelgp <- paste0("labelgp",i)
         legend <- c(legend,input[[labelgp]])
       }
-      print(legend)
     }
     return(legend)
   })
@@ -349,10 +350,12 @@ server <- function(input, output,session) {
       col[which(type_vec()=="D")] <- input$coldisc2
       col_order <- c(input$colcont2,input$coldisc2)
     }else{
+      req(input$custom2, input$other_group2)
       col_order <- c()
       for(i in 1:new_groups2()){
         id <- paste0("numgppr2",i)
         color_new <- paste0("colorgppr2",i)
+        req(input[[id]])
         col[as.numeric(unlist(strsplit(input[[id]],",")))] <- input[[color_new]]
         col_order <-c(col_order,input[[color_new]])
       }
