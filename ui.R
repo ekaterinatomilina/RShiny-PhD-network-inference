@@ -1,4 +1,5 @@
-ui <- fluidPage(theme=bs_theme(version=5, bootswatch = "lux"),
+ui <- fluidPage(title="Gaussian copula network inference",
+theme=bs_theme(version=5, bootswatch = "lux"),
                 useShinyjs(),
                 add_busy_spinner(spin = "flower",color="red",position="bottom-right"),
                 titlePanel(h1("Gaussian copula network inference",align="center")),
