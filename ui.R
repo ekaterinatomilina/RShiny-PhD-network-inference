@@ -1,7 +1,7 @@
 ui <- fluidPage(title="Gaussian copula network inference",
 theme=bs_theme(version=5, bootswatch = "lux"),
                 useShinyjs(),
-                add_busy_spinner(spin = "flower",color="red",position="bottom-right"),
+                add_busy_spinner(spin = "flower",color="blue",position="bottom-right"),
                 titlePanel(h1("Gaussian copula network inference",align="center")),
                 
                 card(tags$div("This application enables the user to perform network inference on heterogeneous variables by assuming a Gaussian copula structure.
